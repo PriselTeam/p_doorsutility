@@ -138,7 +138,7 @@ if CLIENT then
         net.Start("Prisel::DoorsUtility::SaveZone")
             net.WriteVector(Prisel.DoorsUtility.ToolSettings.Start)
             net.WriteVector(Prisel.DoorsUtility.ToolSettings.End)
-            net.WriteInt(Prisel.DoorsUtility.ToolSettings.Price, 32)
+            net.WriteUInt(Prisel.DoorsUtility.ToolSettings.Price, 32)
         net.SendToServer()
 
         Prisel.DoorsUtility.ToolSettings.Start = nil
