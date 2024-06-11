@@ -16,6 +16,7 @@ if CLIENT then
     Prisel.DoorsUtility.ToolSettings = {
         Start = nil,
         End = nil,
+        Price = 0,
         Doors = {}
     }
     
@@ -29,9 +30,6 @@ if CLIENT then
 	end
 
 	reloadToolInfo()
-
-    function TOOL:Deploy()
-    end
 
     hook.Add("HUDPaint", "Prisel::DoorsUtility::TOOLPaint", function()
 
@@ -102,12 +100,12 @@ if CLIENT then
 
         if not Prisel.DoorsUtility.StaffLists[LocalPlayer():GetUserGroup()] then 
             draw.SimpleText("PAS ACCÈS", PLib:Font("Bold", 46), w / 2, h / 2, PLib.Constants.Colors["red"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-            
         return end
 
 
         draw.SimpleText("Prisel Doors", PLib:Font("Bold", 46), w / 2, h / 2, PLib.Constants.Colors["blue"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-	end
+        draw.SimpleText(DarkRP.formatMoney(tonumber(Prisel.DoorsUtility.ToolSettings.Price)), PLib:Font("SemiBold", 32), w / 2, h / 2 + 50, PLib.Constants.Colors["blue"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
 
     function TOOL:LeftClick(trace)
 
@@ -128,41 +126,109 @@ if CLIENT then
         return true
     end
 
-    function TOOL.BuildCPanel(CPanel)
-        CPanel:AddControl("Header", {Text = "Prisel Doors Utility", Description = "Outil de gestion des portes"})
-
-        CPanel:AddControl("Button", {Label = "Reset", Command = "pdoors_utility_reload"})
-        CPanel:AddControl("Button", {Label = "Save Zone", Command = "pdoors_utility_svz"})
-    end
-
-    concommand.Add("pdoors_utility_svz", function()
-
+    function Prisel.DoorsUtility:SaveZone()
         if not Prisel.DoorsUtility.StaffLists[LocalPlayer():GetUserGroup()] then return end
 
         if not Prisel.DoorsUtility.ToolSettings.Start or not Prisel.DoorsUtility.ToolSettings.End then return end
 
         if #Prisel.DoorsUtility.ToolSettings.Doors == 0 then return end
+        if Prisel.DoorsUtility.ToolSettings.Price == 0 then return end
+        if not tonumber(Prisel.DoorsUtility.ToolSettings.Price) then return end
 
         net.Start("Prisel::DoorsUtility::SaveZone")
-        net.WriteVector(Prisel.DoorsUtility.ToolSettings.Start)
-        net.WriteVector(Prisel.DoorsUtility.ToolSettings.End)
+            net.WriteVector(Prisel.DoorsUtility.ToolSettings.Start)
+            net.WriteVector(Prisel.DoorsUtility.ToolSettings.End)
+            net.WriteInt(Prisel.DoorsUtility.ToolSettings.Price, 32)
         net.SendToServer()
 
         Prisel.DoorsUtility.ToolSettings.Start = nil
         Prisel.DoorsUtility.ToolSettings.End = nil
+        Prisel.DoorsUtility.ToolSettings.Price = 0
         Prisel.DoorsUtility.ToolSettings.Doors = {}
 
         notification.AddLegacy("Zone sauvegardée", NOTIFY_GENERIC, 5)
         surface.PlaySound("buttons/button24.wav")
-    end)
+    end
 
-    concommand.Add("pdoors_utility_reload", function()
+    function Prisel.DoorsUtility:ResetZone()
         Prisel.DoorsUtility.ToolSettings.Start = nil
         Prisel.DoorsUtility.ToolSettings.End = nil
+        Prisel.DoorsUtility.ToolSettings.Price = 0
         Prisel.DoorsUtility.ToolSettings.Doors = {}
 
         notification.AddLegacy("Zone Reset", NOTIFY_GENERIC, 5)
-    end)
+    end
+
+    function TOOL.BuildCPanel(CPanel)
+
+        function CPanel:Paint(w, h)
+            surface.SetDrawColor(PLib.Constants.Colors["background"])
+            surface.SetMaterial(Material("vgui/white"))
+            surface.DrawTexturedRect(0, 0, w, h)
+        end
+
+        local priceEntry = vgui.Create("DTextEntry", CPanel)
+        priceEntry:Dock(TOP)
+        priceEntry:DockMargin(RX(20), RY(10), RX(20), 0)
+        priceEntry:SetPlaceholderText("Prix de la zone")
+        priceEntry:SetFont(PLib:Font("Regular", 16))
+        priceEntry:SetValue("0")
+        priceEntry:SetNumeric(true)
+        priceEntry:SetDrawLanguageID(false)
+
+        function priceEntry:OnChange()
+
+            if (not tonumber(self:GetValue())) or self:GetValue() == nil then
+                self:SetValue("0")
+                Prisel.DoorsUtility.ToolSettings.Price = 0
+                return
+            end
+
+            Prisel.DoorsUtility.ToolSettings.Price = tonumber(self:GetValue())
+        end
+
+        function priceEntry:OnEnter()
+            if (not tonumber(self:GetValue())) or self:GetValue() == nil then
+                self:SetValue("0")
+                Prisel.DoorsUtility.ToolSettings.Price = 0
+                return
+            end
+
+            Prisel.DoorsUtility.ToolSettings.Price = tonumber(self:GetValue())
+        end
+
+        local saveButton = vgui.Create("DButton", CPanel)
+        saveButton:Dock(TOP)
+        saveButton:DockMargin(RX(20), RY(10), RX(20), 0)
+        saveButton:SetText("Sauvegarder la zone")
+        saveButton:SetTextColor(color_white)
+        saveButton:SetFont(PLib:Font("Bold", 16))
+        saveButton.Paint = function(self, w, h)
+            surface.SetDrawColor(PLib.Constants.Colors["blue"])
+            surface.SetMaterial(Material("vgui/white"))
+            surface.DrawTexturedRect(0, 0, w, h)
+        end
+
+        saveButton.DoClick = function()
+            Prisel.DoorsUtility:SaveZone()
+        end
+
+        local resetButton = vgui.Create("DButton", CPanel)
+        resetButton:Dock(TOP)
+        resetButton:DockMargin(RX(20), RY(10), RX(20), RY(10))
+        resetButton:SetText("Reset la zone")
+        resetButton:SetTextColor(color_white)
+        resetButton:SetFont(PLib:Font("Bold", 16))
+        resetButton.Paint = function(self, w, h)
+            surface.SetDrawColor(PLib.Constants.Colors["red"])
+            surface.SetMaterial(Material("vgui/white"))
+            surface.DrawTexturedRect(0, 0, w, h)
+        end
+
+        resetButton.DoClick = function()
+            Prisel.DoorsUtility:ResetZone()
+        end
+    end
 
     function TOOL:RightClick(trace)
         if cooldown > CurTime() then return end
@@ -185,6 +251,7 @@ if CLIENT then
     function TOOL:Reload()
         Prisel.DoorsUtility.ToolSettings.Start = nil
         Prisel.DoorsUtility.ToolSettings.End = nil
+        Prisel.DoorsUtility.ToolSettings.Price = 0
         Prisel.DoorsUtility.ToolSettings.Doors = {}
     end
 

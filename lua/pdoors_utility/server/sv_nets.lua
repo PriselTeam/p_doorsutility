@@ -5,6 +5,7 @@ net.Receive("Prisel::DoorsUtility::SaveZone", function(len, ply)
 
     local start = net.ReadVector()
     local endpos = net.ReadVector()
+    local price = net.ReadInt(32)
 
     local doors = {}
     for k, v in pairs(ents.FindInBox(start, endpos)) do
@@ -15,5 +16,5 @@ net.Receive("Prisel::DoorsUtility::SaveZone", function(len, ply)
 
     if #doors == 0 then return end
 
-    Prisel.DoorsUtility:NewZone(start, endpos, doors)
+    Prisel.DoorsUtility:NewZone(start, endpos, doors, price)
 end)
