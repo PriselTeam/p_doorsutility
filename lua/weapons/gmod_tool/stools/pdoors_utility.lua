@@ -6,6 +6,7 @@ TOOL.Author = "Ekali"
 if CLIENT then
 
     local cooldown = 0
+    local bViewZone = false
 
     TOOL.Information = {
 		{name = "left"},
@@ -56,6 +57,24 @@ if CLIENT then
             draw.SimpleText("Door #"..k .. " [" .. v.Ent:EntIndex().."]", PLib:Font("SemiBold", 12), entCenter.x, entCenter.y - 50, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
 
+        if Prisel.DoorsUtility.Zones then
+            for k, v in ipairs(Prisel.DoorsUtility.Zones) do
+
+                local vStart = Vector(v.Start.x, v.Start.y, v.Start.z)
+         
+                if vStart:DistToSqr(LocalPlayer():GetPos()) > 1024^2 then continue end
+
+                local vecStart = vStart:ToScreen()
+                local vecEnd = Vector(v.End.x, v.End.y, v.End.z):ToScreen()
+
+                -- center of the zone
+                local center = Vector((v.Start.x + v.End.x) / 2, (v.Start.y + v.End.y) / 2, (v.Start.z + v.End.z) / 2):ToScreen()
+
+                draw.SimpleText("Zone #"..k, PLib:Font("SemiBold", 32), center.x, center.y - 50, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                draw.SimpleText(DarkRP.formatMoney(tonumber(v.Price)), PLib:Font("SemiBold", 24), center.x, center.y - 20, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
+        end
+
     end)
 
     local x = Vector( 5, 5, 5 )
@@ -90,6 +109,22 @@ if CLIENT then
             local pos = ent:GetPos()
             local mins, maxs = ent:LocalToWorld(ent:OBBMins()), ent:LocalToWorld(ent:OBBMaxs())
             render.DrawWireframeBox(Vector(0, 0, 0), Angle(0, 0, 0), mins, maxs, Color(37, 197, 37), true)
+        end
+
+        if Prisel.DoorsUtility.Zones then
+            for k, v in ipairs(Prisel.DoorsUtility.Zones) do
+                local vecStart = Vector(v.Start.x, v.Start.y, v.Start.z)
+                local vecEnd = Vector(v.End.x, v.End.y, v.End.z)
+
+                if not vecStart:ToScreen().visible then
+                    continue
+                end
+
+                render.SetColorMaterial()
+                render.DrawBox(vecStart, angle_zero, -x, x, PLib.Constants.Colors["green"], true)
+                render.DrawBox(vecEnd, angle_zero, x, -x, PLib.Constants.Colors["green"], true)
+                render.DrawWireframeBox(Vector(0, 0, 0), Angle(0, 0, 0), vecStart, vecEnd, PLib.Constants.Colors["hoverGreen"], true)
+            end
         end
 	end)
     
@@ -227,6 +262,36 @@ if CLIENT then
 
         resetButton.DoClick = function()
             Prisel.DoorsUtility:ResetZone()
+        end
+        
+        local viewZones = vgui.Create("DButton", CPanel)
+        viewZones:Dock(TOP)
+        viewZones:DockMargin(RX(20), RY(10), RX(20), RY(10))
+        viewZones:SetText("Voir toutes les zones")
+        viewZones:SetTextColor(color_white)
+        viewZones:SetFont(PLib:Font("Bold", 16))
+        viewZones.Paint = function(self, w, h)
+            surface.SetDrawColor(PLib.Constants.Colors["hoverBlue"])
+            surface.SetMaterial(Material("vgui/white"))
+            surface.DrawTexturedRect(0, 0, w, h)
+        end
+
+        viewZones.DoClick = function(self)
+            if not bViewZone then
+                net.Start("Prisel::DoorsUtility::ViewZones")
+                net.SendToServer()
+                self:SetText("Cacher toutes les zones")
+
+                net.Receive("Prisel::DoorsUtility::ViewZones", function()
+                    local zones = net.ReadTable()
+                    Prisel.DoorsUtility.Zones = zones
+                end)
+                bViewZone = true
+            else
+                Prisel.DoorsUtility.Zones = {}
+                bViewZone = false 
+                self:SetText("Voir toutes les zones")
+            end
         end
     end
 
