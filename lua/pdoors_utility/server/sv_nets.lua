@@ -1,7 +1,14 @@
 util.AddNetworkString("Prisel::DoorsUtility::SaveZone")
+util.AddNetworkString("Prisel::DoorsUtility::ViewZones")
+
+local cooldown = {}
 
 net.Receive("Prisel::DoorsUtility::SaveZone", function(len, ply)
     if not Prisel.DoorsUtility.StaffLists[ply:GetUserGroup()] then return end
+
+    if cooldown[ply] and cooldown[ply] > CurTime() then return end
+
+    cooldown[ply] = CurTime() + 1
 
     local start = net.ReadVector()
     local endpos = net.ReadVector()
@@ -17,4 +24,15 @@ net.Receive("Prisel::DoorsUtility::SaveZone", function(len, ply)
     if #doors == 0 then return end
 
     Prisel.DoorsUtility:NewZone(start, endpos, doors, price)
+end)
+
+net.Receive("Prisel::DoorsUtility::ViewZones", function(len, ply)
+    if not Prisel.DoorsUtility.StaffLists[ply:GetUserGroup()] then return end
+    if cooldown[ply] and cooldown[ply] > CurTime() then return end
+
+    cooldown[ply] = CurTime() + 1
+
+    net.Start("Prisel::DoorsUtility::ViewZones")
+        net.WriteTable(Prisel.DoorsUtility.Zones)
+    net.Send(ply)
 end)
