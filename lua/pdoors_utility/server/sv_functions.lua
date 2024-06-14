@@ -38,8 +38,6 @@ function Prisel.DoorsUtility:LoadDoors()
         local doors = util.JSONToTable(v.doors)
         local price = v.price
 
-        print(start, endpos, doors, price)
-
         Prisel.DoorsUtility.Zones[k] = {
             Start = start,
             End = endpos,
