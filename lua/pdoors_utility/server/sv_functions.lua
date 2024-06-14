@@ -84,6 +84,7 @@ function Prisel.DoorsUtility:playerBuyDoor(ply, ent)
     end
 
     DarkRP.notify(ply, 0, 4, "Vous avez acheté cette maison pour " .. doors.price .. "€")
+    return true
 end
 
 function Prisel.DoorsUtility:playerSellDoor(ply, ent)
@@ -106,4 +107,5 @@ function Prisel.DoorsUtility:playerSellDoor(ply, ent)
     
     ply:addMoney(price)
     DarkRP.notify(ply, 0, 4, "Vous avez vendu cette maison pour " .. price .. "€")
+    return true
 end
