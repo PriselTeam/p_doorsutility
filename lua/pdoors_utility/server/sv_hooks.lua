@@ -4,13 +4,17 @@ hook.Add("InitPostEntity", "Prisel::DoorsUtility::InitPostEntity", function()
 end)
 
 hook.Add("playerBuyDoor", "Prisel::DoorsUtility::playerBuyDoor", function(ply, ent)
-    Prisel.DoorsUtility:playerBuyDoor(ply, ent)
 
-    return false
+    if Prisel.DoorsUtility:playerBuyDoor(ply, ent) then
+        return false
+    end
+
 end)
 
 hook.Add("playerSellDoor", "Prisel::DoorsUtility::playerSellDoor", function(ply, ent)
-    Prisel.DoorsUtility:playerSellDoor(ply, ent)
 
-    return false
+    if Prisel.DoorsUtility:playerSellDoor(ply, ent) then
+        return false
+    end
+
 end)

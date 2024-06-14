@@ -66,6 +66,10 @@ end
 function Prisel.DoorsUtility:playerBuyDoor(ply, ent)
     local doors = Prisel.DoorsUtility:GetOtherDoors(ent)
 
+    if #doors <= 0 then
+        return false
+    end
+
     if not ply:canAfford(doors.price) then
         DarkRP.notify(ply, 1, 4, "Vous n'avez pas assez d'argent pour acheter cette maison. [Prix: " .. doors.price .. "€]")
     return end
@@ -87,9 +91,12 @@ end
 function Prisel.DoorsUtility:playerSellDoor(ply, ent)
     local doors = Prisel.DoorsUtility:GetOtherDoors(ent)
 
+    if #doors <= 0 then
+        return false
+    end
+
     local price = math.floor(doors.price / 2)
 
-    
     for k, v in ipairs(doors) do
         local vent = Entity(v)
         if vent:PRIsDoor() then
